@@ -4,7 +4,7 @@ An interactive, research-backed visualization of a from-scratch k-means++
 implementation across three UCI datasets: Pen Digits, Landsat Satellite, and
 Yeast Proteins.
 
-**Live site:** https://usamahmoin.github.io/Data-Mining-3/
+**Live site:** https://usamahmoin.github.io/K-Means-Cluster-Explorer/
 
 ## What the project shows
 
