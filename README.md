@@ -1,41 +1,48 @@
-# K-Means Clustering Project
+# K-Means Cluster Explorer
 
-This project implements the K-Means clustering algorithm from scratch in Python. The code is designed to process a dataset, perform clustering, and visualize the clustering error for different numbers of clusters.
+An interactive, research-backed visualization of a from-scratch k-means++
+implementation across three UCI datasets: Pen Digits, Landsat Satellite, and
+Yeast Proteins.
 
-## Prerequisites
+**Live site:** https://usamahmoin.github.io/Data-Mining-3/
 
-- Python 3.x
-- NumPy
-- Pandas
-- Matplotlib
+## What the project shows
 
-## Installation
+- A PCA projection of each dataset colored by cluster assignment or known label.
+- Results for every `k` from 2 through 10.
+- Standard k-means inertia, silhouette score, and adjusted Rand agreement.
+- Cluster sizes and iteration-by-iteration convergence.
+- A comparison between the most geometrically separated `k` and the known
+  number of classes.
 
-To install the required packages, you can use pip:
+Known labels are never passed to k-means. They are used only after clustering
+to calculate the adjusted Rand index and to provide an optional comparison
+view.
 
-pip install numpy pandas matplotlib
+## Method
 
+The implementation uses k-means++ initialization, Lloyd updates, six
+deterministic restarts, and the standard within-cluster sum of squared
+Euclidean distances. The lowest-inertia restart is retained for each value of
+`k`. Silhouette scores use a deterministic sample of at most 1,800 rows.
 
-## Functions
+PCA is used only to draw the two-dimensional scatterplot. Clustering runs in
+the original feature space.
 
-### `setup_centroids(dataset, num_clusters, random_seed=0)`
-Initializes centroids for K-Means using the k-means++ algorithm.
+## Run locally
 
-### `compute_error(cluster_groups, centroids_list)`
-Computes the total error for the given clusters and centroids.
+```bash
+python3 -m pip install -r requirements.txt
+python3 Project3.py
+python3 -m http.server 8000
+```
 
-### `assign_clusters(dataset, centroids)`
-Assigns each data point in the dataset to the nearest centroid.
+Then open `http://localhost:8000`.
 
-### `execute_k_means(dataset, num_clusters, iterations=20)`
-Performs the K-Means clustering algorithm and returns the final error and centroids.
+## Rebuild the visualization data
 
-### `display_error_graph(cluster_counts, error_values, graph_title)`
-Displays a graph of the total error for different numbers of clusters.
+```bash
+python3 tools/build_artifact.py
+```
 
-### `process_dataset(dataset_filepath)`
-Processes the dataset, performs K-Means clustering for a range of cluster counts, and displays the error graph.
-
-## Main Execution
-
-The script is designed to be run from the command line. It expects a single argument: the path to the dataset file. The dataset file should be in a format compatible with Pandas `read_csv` function with whitespace as the delimiter and no header.
+This regenerates `cluster-artifact.json` from the files in `UCI_datasets/`.

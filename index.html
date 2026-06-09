@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore k-means++ clustering across handwritten digits, Landsat pixels, and yeast protein data.">
+  <title>K-Means Cluster Explorer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="page-shell">
+    <section class="hero">
+      <p class="eyebrow">Unsupervised learning &middot; three UCI datasets</p>
+      <h1>Where does the data divide itself?</h1>
+      <p class="hero-copy">Move through cluster counts and watch the same k-means++ algorithm find structure in pen trajectories, satellite pixels, and protein signals. The labels stay hidden until evaluation.</p>
+      <div class="hero-facts">
+        <div><strong>13,929</strong><span>objects clustered</span></div>
+        <div><strong>2-10</strong><span>clusters explored</span></div>
+        <div><strong>6</strong><span>restarts per result</span></div>
+        <div><strong>0</strong><span>labels used to train</span></div>
+      </div>
+    </section>
+
+    <section class="section-block" aria-labelledby="explorer-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Cluster laboratory</p>
+          <h2 id="explorer-title">Change the question. Watch the partition move.</h2>
+        </div>
+        <p>The scatterplot is a two-dimensional PCA view. Cluster assignment still uses every original feature, so the display is a projection rather than the model's full geometry.</p>
+      </div>
+
+      <div class="dataset-tabs" id="dataset-tabs" role="tablist" aria-label="Dataset"></div>
+
+      <div class="explorer-grid">
+        <article class="panel scatter-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Projected feature space</p>
+              <h3 id="scatter-title">Loading dataset</h3>
+            </div>
+            <div class="view-toggle" role="group" aria-label="Point colors">
+              <button type="button" data-view="clusters" aria-pressed="true">Clusters</button>
+              <button type="button" data-view="labels" aria-pressed="false">Known labels</button>
+            </div>
+          </div>
+          <div class="canvas-wrap">
+            <canvas id="cluster-canvas" aria-label="PCA scatterplot of clustered observations"></canvas>
+            <div class="canvas-tooltip" id="canvas-tooltip" hidden></div>
+          </div>
+          <div class="plot-note">
+            <span id="projection-note">PCA variance shown here</span>
+            <span id="sample-note">Display sample</span>
+          </div>
+        </article>
+
+        <aside class="panel control-panel">
+          <p class="eyebrow">Current partition</p>
+          <div class="k-readout">
+            <span>k</span>
+            <strong id="k-value">2</strong>
+            <p id="k-context">Two candidate clusters</p>
+          </div>
+          <label class="range-label" for="k-slider">
+            <span>Number of clusters</span>
+            <output id="k-output">2</output>
+          </label>
+          <input id="k-slider" type="range" min="2" max="10" step="1" value="2">
+          <div class="range-ticks" aria-hidden="true">
+            <span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+          </div>
+
+          <div class="metric-stack">
+            <div>
+              <span>Silhouette</span>
+              <strong id="metric-silhouette">-</strong>
+              <small>separation without labels</small>
+            </div>
+            <div>
+              <span>Adjusted Rand</span>
+              <strong id="metric-ari">-</strong>
+              <small>agreement with known classes</small>
+            </div>
+            <div>
+              <span>Inertia / object</span>
+              <strong id="metric-inertia">-</strong>
+              <small>squared distance to centroid</small>
+            </div>
+            <div>
+              <span>Iterations</span>
+              <strong id="metric-iterations">-</strong>
+              <small>until convergence</small>
+            </div>
+          </div>
+
+          <div class="cluster-sizes">
+            <div class="mini-heading">
+              <h3>Cluster sizes</h3>
+              <span id="size-total">-</span>
+            </div>
+            <div id="cluster-size-chart"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section-block" aria-labelledby="quality-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Choosing k</p>
+          <h2 id="quality-title">No single curve answers every question.</h2>
+        </div>
+        <p>Inertia always falls as more centroids are added. Silhouette asks whether clusters are compact and separated. Adjusted Rand asks a different question: whether the unsupervised partition resembles known classes.</p>
+      </div>
+
+      <div class="quality-grid">
+        <article class="panel chart-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Across k = 2-10</p>
+              <h3>Quality curves</h3>
+            </div>
+            <div class="metric-tabs" id="metric-tabs" role="tablist" aria-label="Quality metric">
+              <button type="button" role="tab" data-metric="silhouette" aria-selected="true">Silhouette</button>
+              <button type="button" role="tab" data-metric="adjustedRand" aria-selected="false">Adjusted Rand</button>
+              <button type="button" role="tab" data-metric="inertiaPerPoint" aria-selected="false">Inertia</button>
+            </div>
+          </div>
+          <div class="line-chart" id="quality-chart"></div>
+          <p class="chart-caption" id="quality-caption"></p>
+        </article>
+
+        <article class="panel chart-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Lloyd updates</p>
+              <h3>Convergence trace</h3>
+            </div>
+            <button class="action-button" id="replay-convergence" type="button">Replay convergence</button>
+          </div>
+          <div class="convergence-stage">
+            <div class="iteration-orb">
+              <span>Iteration</span>
+              <strong id="iteration-value">1</strong>
+            </div>
+            <div class="convergence-chart" id="convergence-chart"></div>
+          </div>
+          <p class="chart-caption">Each update assigns points to the nearest centroid, then moves every centroid to its assigned mean. The trace cannot increase.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block" aria-labelledby="comparison-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">What the datasets reveal</p>
+          <h2 id="comparison-title">Geometric groups are not always human categories.</h2>
+        </div>
+        <p>A class label describes a task. A cluster describes distance structure. Agreement can be strong, partial, or weak without making either description invalid.</p>
+      </div>
+      <div class="comparison-grid" id="comparison-grid"></div>
+    </section>
+
+    <section class="section-block" aria-labelledby="method-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">From-scratch method</p>
+          <h2 id="method-title">Careful seeds, repeated search, honest diagnostics.</h2>
+        </div>
+        <p>The implementation preserves the assignment's core algorithm while using the standard squared-distance objective and multiple initializations to reduce sensitivity to unlucky seeds.</p>
+      </div>
+      <div class="pipeline">
+        <article><span>01</span><h3>Seed</h3><p>Choose the first centroid randomly, then sample later centers in proportion to squared distance from existing centers.</p></article>
+        <article><span>02</span><h3>Assign</h3><p>Place each object in the cluster whose centroid has the smallest squared Euclidean distance.</p></article>
+        <article><span>03</span><h3>Update</h3><p>Replace each centroid with the mean of its members and repeat until center movement stops.</p></article>
+        <article><span>04</span><h3>Restart</h3><p>Run six deterministic initializations for every k and retain the partition with the lowest inertia.</p></article>
+        <article><span>05</span><h3>Validate</h3><p>Measure silhouette without labels, then use adjusted Rand only as an external comparison with known classes.</p></article>
+        <article><span>06</span><h3>Project</h3><p>Fit PCA only for the browser scatterplot. The clustering itself remains in the original feature space.</p></article>
+      </div>
+    </section>
+
+    <section class="section-block research" aria-labelledby="research-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Research foundation</p>
+          <h2 id="research-title">The diagnostics have different jobs.</h2>
+        </div>
+        <p>The algorithm, internal validation, and label comparison are grounded in their original methods. Dataset details link directly to UCI.</p>
+      </div>
+      <div class="source-grid">
+        <a href="https://theory.stanford.edu/~sergei/papers/kMeansPP-soda.pdf" target="_blank" rel="noreferrer">
+          <span>Arthur &amp; Vassilvitskii &middot; 2007</span>
+          <h3>k-means++: The Advantages of Careful Seeding</h3>
+          <p>Introduces distance-weighted initialization and analyzes its advantage over arbitrary seeds.</p>
+          <strong>Proceedings of SODA &#8599;</strong>
+        </a>
+        <a href="https://doi.org/10.1016/0377-0427(87)90125-7" target="_blank" rel="noreferrer">
+          <span>Rousseeuw &middot; 1987</span>
+          <h3>Silhouettes</h3>
+          <p>Measures how closely an observation fits its own cluster compared with its nearest alternative.</p>
+          <strong>Journal of Computational and Applied Mathematics &#8599;</strong>
+        </a>
+        <a href="https://doi.org/10.1007/BF01908075" target="_blank" rel="noreferrer">
+          <span>Hubert &amp; Arabie &middot; 1985</span>
+          <h3>Comparing Partitions</h3>
+          <p>Defines chance-adjusted agreement between two partitions without requiring matching cluster names.</p>
+          <strong>Journal of Classification &#8599;</strong>
+        </a>
+      </div>
+      <div class="dataset-sources" id="dataset-sources"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>K-Means Cluster Explorer &middot; Data Mining Project</p>
+    <a href="https://github.com/UsamahMoin/Data-Mining-3" target="_blank" rel="noreferrer">View repository &#8599;</a>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
